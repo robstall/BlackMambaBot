@@ -10,13 +10,16 @@ drawBottonPlate = true;
 drawRightSidePlate = true;
 drawLeftSidePlate = true;
 drawBackPlate = true;
-drawComponents = true;
+drawComponents = false;
+drawTopFwdPlate = true;
+showSizeLimit = false;
 
 thickness = 3;
 wheelDiameter = 66.5;
 bottomPlateSize = [145 - thickness, 145, thickness];
 sidePlateSize = [145, wheelDiameter - 5, thickness];
 axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-5]; // x and z offset of axel
+topFwdPlateSize = [145, 145, thickness];
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -32,16 +35,16 @@ module pb2sBatt() {
 
 module aaBatt() {
   d = aa4BatteryHolderSize();
-  translate([d[0] + 80, d[1]/2, 0])
+  translate([d[0]+sidePlateSize[2]+1, d[1]/2, 10])
     rotate([0, 0, 180])
       aa4BatteryHolder();
 }
 
 module rpi() {
   d = rpi_bplusSize();
-  translate([5, -d[1]/2, 20])
-     rpi_bplus(show_dongle = 1);
-    //cube(d);
+  translate([d[0] + 45, -d[0]/2, 3])
+    rotate([0, 0, 90])
+      rpi_bplus(show_dongle = 1);
 }
 
 module servo(side) {
@@ -64,13 +67,17 @@ module bottomPlate() {
       cube(bottomPlateSize); 
 }
 
+module sideBlank() {  
+  cube(sidePlateSize);
+}
+
 module sidePlate(side) {
-  // This translation is easier if the plate is centered before rotating so that the left and right y offsets are the same.
   s = (side == "right" ? -1 : 1);
+  yOff = (side == "right" ? - sidePlateSize[2] : 0);
   difference() {
-    translate([sidePlateSize[0]/2, s*(bottomPlateSize[0]/2 +  sidePlateSize[2]/2), sidePlateSize[1]/2-bottomPlateSize[2]])
+    translate([0, s*bottomPlateSize[1]/2 + sidePlateSize[2] + yOff, -bottomPlateSize[2]])
        rotate([90, 0, 0])
-        cube(sidePlateSize, center=true); 
+          sideBlank();
       servo(side);
   } 
 }
@@ -80,11 +87,11 @@ module backPlate() {
   ventDim = [5, d[1]-25, d[2]];
   vents = 10;
   ventSpacing = d[0] / (vents+1);
-  translate([0, -bottomPlateSize[0]/2, -bottomPlateSize[2]])
+  translate([0, -bottomPlateSize[0]/2-thickness/2, -bottomPlateSize[2]])
     rotate([90, 0, 90])
       difference() {
         cube(d);
-        translate([30, d[2], 0])
+        translate([31.5, d[2], 0])
           plate([16.5, 8, d[2]], r=1);
         for (n = [1:vents]) {
           translate([ventSpacing*n-ventDim[0]/2, 15, 0])
@@ -96,6 +103,16 @@ module backPlate() {
 module topPlate() {
 }
 
+module topFwdPlate() {
+  d = topFwdPlateSize;
+  translate([60, -d[1]/2, 56])
+    rotate([0, 25, 0]) {
+      //scale([0.5, 0.5, 0.1])
+      //  surface(file = "BlackMamba.png", invert=false);
+      cube(topFwdPlateSize);
+    }
+}
+
 module bot() {
   if (drawBottonPlate) 
     color("green") bottomPlate();
@@ -105,6 +122,8 @@ module bot() {
     color("darkgreen") sidePlate("left");
   if (drawBackPlate)
     color("blue") backPlate();
+  if (drawTopFwdPlate)
+    color("yellow") topFwdPlate();
   
   if (drawComponents) {
     color("red") pb2sBatt();
@@ -116,7 +135,8 @@ module bot() {
     color("yellow") wheel(side = "left");
   }
   
-  sizeLimit();
+  if (showSizeLimit)
+    sizeLimit();
 }
 
 
