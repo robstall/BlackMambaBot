@@ -7,10 +7,10 @@ use <../../SCADLib/servoS9001.scad>
 // Dimensions in mm
 
 drawBottonPlate = true;
-drawRightSidePlate = true;
+drawRightSidePlate = false;
 drawLeftSidePlate = true;
 drawBackPlate = true;
-drawComponents = false;
+drawComponents = true;
 drawTopFwdPlate = true;
 showSizeLimit = false;
 
@@ -20,6 +20,8 @@ bottomPlateSize = [145 - thickness, 145, thickness];
 sidePlateSize = [145, wheelDiameter - 5, thickness];
 axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-5]; // x and z offset of axel
 topFwdPlateSize = [145, 145, thickness];
+wedgeAngle = 25; // Angle of wedge
+wedgeX = 60; // Distance from rear wedge starts at
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -68,7 +70,15 @@ module bottomPlate() {
 }
 
 module sideBlank() {  
-  cube(sidePlateSize);
+  // Calculate triangle to cut away
+  d = sidePlateSize;
+  a = d[0] - wedgeX;
+  o = a * tan(wedgeAngle);
+  p = [[wedgeX, d[1]], [d[0], d[1]], [d[0], d[1]-o]];
+  difference() {
+    cube(sidePlateSize);
+    linear_extrude(height=d[2]) polygon(points=p);
+  }
 }
 
 module sidePlate(side) {
@@ -105,10 +115,10 @@ module topPlate() {
 
 module topFwdPlate() {
   d = topFwdPlateSize;
-  translate([60, -d[1]/2, 56])
-    rotate([0, 25, 0]) {
+  translate([wedgeX, -d[1]/2, 55])
+    rotate([0, wedgeAngle, 0]) {
       //scale([0.5, 0.5, 0.1])
-      //  surface(file = "BlackMamba.png", invert=false);
+      //  surface(file = "BlackMamba.png", invert=true);
       cube(topFwdPlateSize);
     }
 }
