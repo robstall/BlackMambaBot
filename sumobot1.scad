@@ -7,7 +7,7 @@ use <../../SCADLib/servoS9001.scad>
 // Dimensions in mm
 
 drawBottonPlate = true;
-drawRightSidePlate = false;
+drawRightSidePlate = true;
 drawLeftSidePlate = true;
 drawBackPlate = true;
 drawComponents = true;
@@ -18,10 +18,12 @@ thickness = 3;
 wheelDiameter = 66.5;
 bottomPlateSize = [145 - thickness, 145, thickness];
 sidePlateSize = [145, wheelDiameter - 5, thickness];
-axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-5]; // x and z offset of axel
 topFwdPlateSize = [145, 145, thickness];
+
+axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-5]; // x and z offset of axel
 wedgeAngle = 25; // Angle of wedge
 wedgeX = 60; // Distance from rear wedge starts at
+topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * tan(wedgeAngle)]; // Top point where the fwd bow joins
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -63,22 +65,22 @@ module wheel(side) {
       cylinder(d=wheelDiameter, h=5); 
 }
 
-
 module bottomPlate() {
    translate([sidePlateSize[2], -bottomPlateSize[1]/2, -bottomPlateSize[2]]) 
       cube(bottomPlateSize); 
 }
 
 module sideBlank() {  
-  // Calculate triangle to cut away
   d = sidePlateSize;
-  a = d[0] - wedgeX;
-  o = a * tan(wedgeAngle);
-  p = [[wedgeX, d[1]], [d[0], d[1]], [d[0], d[1]-o]];
-  difference() {
-    cube(sidePlateSize);
-    linear_extrude(height=d[2]) polygon(points=p);
-  }
+  pts = [
+    [0, 0],
+    [0, d[1]],
+    [wedgeX, d[1]],
+    topJoinPt,
+    [d[0], 0]
+  ];
+  linear_extrude(height=d[2]) 
+    polygon(points=pts);
 }
 
 module sidePlate(side) {
@@ -121,6 +123,10 @@ module topFwdPlate() {
       //  surface(file = "BlackMamba.png", invert=true);
       cube(topFwdPlateSize);
     }
+}
+
+module bowBottomPlate() {
+  
 }
 
 module bot() {
