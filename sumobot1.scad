@@ -13,6 +13,9 @@ drawBackPlate = true;
 drawComponents = true;
 drawTopFwdPlate = true;
 showSizeLimit = false;
+drawRightSideFwdPlate = true;
+drawLeftSideFwdPlate = true;
+drawBottomFwdPlate = true;
 
 thickness = 3;
 wheelDiameter = 66.5;
@@ -94,6 +97,25 @@ module sidePlate(side) {
   } 
 }
 
+module sideFwdBlank() {
+  d = sidePlateSize;
+  pts = [
+    [0, 0],
+    [0, topJoinPt[1]],
+    [topJoinPt[1]/tan(wedgeAngle), 0]
+  ];
+  linear_extrude(height=d[2])
+    polygon(points=pts);
+}
+
+module sideFwdPlate(side) {
+  s = (side == "right" ? -1 : 1);
+  yOff = (side == "right" ? - sidePlateSize[2] : 0);
+  translate([sidePlateSize[0], s*bottomPlateSize[1]/2 + sidePlateSize[2] + yOff, -bottomPlateSize[2]])
+       rotate([90, 0, 0])
+          sideFwdBlank();
+}
+
 module backPlate() {
   d = [bottomPlateSize[1], sidePlateSize[1], sidePlateSize[2]];
   ventDim = [5, d[1]-25, d[2]];
@@ -125,8 +147,21 @@ module topFwdPlate() {
     }
 }
 
-module bowBottomPlate() {
-  
+module bottomFwdPlateBlank() {
+  pts = [
+    [0, 0],
+    [33, 0],
+    [33, bottomPlateSize[1]],
+    [0, bottomPlateSize[1]]
+  ];
+  linear_extrude(height=bottomPlateSize[2])
+    polygon(pts);
+}
+
+module bottomFwdPlate() {
+  d = bottomPlateSize;
+  translate([d[0]+sidePlateSize[2], -d[1]/2, -d[2]])
+    bottomFwdPlateBlank();
 }
 
 module bot() {
@@ -140,6 +175,12 @@ module bot() {
     color("blue") backPlate();
   if (drawTopFwdPlate)
     color("yellow") topFwdPlate();
+  if (drawRightSideFwdPlate)
+    color("orange") sideFwdPlate("right");
+  if (drawLeftSideFwdPlate)
+    color("orange") sideFwdPlate("left");
+  if (drawBottomFwdPlate)
+    color("orange") bottomFwdPlate();
   
   if (drawComponents) {
     color("red") pb2sBatt();
