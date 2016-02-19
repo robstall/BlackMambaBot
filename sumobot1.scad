@@ -7,23 +7,28 @@ use <../../SCADLib/servoS9001.scad>
 // Dimensions in mm
 
 drawBottonPlate = true;
-drawRightSidePlate = true;
-drawLeftSidePlate = true;
+drawRightSidePlate = false;
+drawLeftSidePlate = false;
 drawBackPlate = true;
 drawComponents = true;
 drawTopFwdPlate = true;
 showSizeLimit = false;
-drawRightSideFwdPlate = true;
-drawLeftSideFwdPlate = true;
+drawRightSideFwdPlate = false;
+drawLeftSideFwdPlate = false;
 drawBottomFwdPlate = true;
+drawRightCaster = true;
+drawLeftCaster = true;
 
+
+groundClearance = 5;
 thickness = 3;
 wheelDiameter = 66.5;
 bottomPlateSize = [145 - thickness, 145, thickness];
-sidePlateSize = [145, wheelDiameter - 5, thickness];
+sidePlateSize = [145, wheelDiameter - groundClearance, thickness];
 topFwdPlateSize = [145, 145, thickness];
+casterBallDiameter = 17.1;
 
-axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-5]; // x and z offset of axel
+axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-groundClearance]; // x and z offset of axel
 wedgeAngle = 25; // Angle of wedge
 wedgeX = 60; // Distance from rear wedge starts at
 topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * tan(wedgeAngle)]; // Top point where the fwd bow joins
@@ -66,6 +71,14 @@ module wheel(side) {
   translate([axelOffset[0], s*bottomPlateSize[0]/2+s*10, axelOffset[1]])
     rotate([-s*90, 0, 0])
       cylinder(d=wheelDiameter, h=5); 
+}
+
+module caster(side) {
+  s = (side == "right" ? -1 : 1);
+  translate([bottomPlateSize[0]+sidePlateSize[2]+casterBallDiameter/2,
+            s*(bottomPlateSize[1]/2-casterBallDiameter), 
+            casterBallDiameter/2-groundClearance-bottomPlateSize[2]])
+    sphere(casterBallDiameter / 2);
 }
 
 module bottomPlate() {
@@ -160,13 +173,21 @@ module bottomFwdPlateBlank() {
 
 module bottomFwdPlate() {
   d = bottomPlateSize;
-  translate([d[0]+sidePlateSize[2], -d[1]/2, -d[2]])
-    bottomFwdPlateBlank();
+  difference() {
+    translate([d[0]+sidePlateSize[2], -d[1]/2, -d[2]])
+      bottomFwdPlateBlank();
+    caster("right");
+    caster("left");
+  }
 }
 
 module bot() {
   if (drawBottonPlate) 
     color("green") bottomPlate();
+  if (drawRightCaster)
+    color("yellow") caster("right");
+  if (drawLeftCaster)
+    color("yellow") caster("left");
   if (drawRightSidePlate)
     color("darkgreen") sidePlate("right");
   if (drawLeftSidePlate)
