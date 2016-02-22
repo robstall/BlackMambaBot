@@ -7,17 +7,17 @@ use <../../SCADLib/servoS9001.scad>
 // Dimensions in mm
 
 drawBottonPlate = true;
-drawRightSidePlate = false;
-drawLeftSidePlate = false;
+drawRightSidePlate = true;
+drawLeftSidePlate = true;
 drawBackPlate = true;
-drawComponents = true;
-drawTopFwdPlate = true;
+drawComponents = false;
+drawTopFwdPlate = false;
 showSizeLimit = false;
 drawRightSideFwdPlate = false;
 drawLeftSideFwdPlate = false;
-drawBottomFwdPlate = true;
-drawRightCaster = true;
-drawLeftCaster = true;
+drawBottomFwdPlate = false;
+drawRightCaster = false;
+drawLeftCaster = false;
 
 
 groundClearance = 5;
@@ -32,6 +32,8 @@ axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-groundClearanc
 wedgeAngle = 25; // Angle of wedge
 wedgeX = 60; // Distance from rear wedge starts at
 topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * tan(wedgeAngle)]; // Top point where the fwd bow joins
+
+//sideBlank("left");
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -81,31 +83,100 @@ module caster(side) {
     sphere(casterBallDiameter / 2);
 }
 
-module bottomPlate() {
-   translate([sidePlateSize[2], -bottomPlateSize[1]/2, -bottomPlateSize[2]]) 
-      cube(bottomPlateSize); 
+module bracket() {
+  t = bottomPlateSize[2] / 2; 
+  cube([10, 10, t]);
+  cube([10, t, 10]);
+  translate([t, 0, 0])
+    rotate([0, -90, 0])
+      linear_extrude(t)
+        polygon([[t,t], [t,10], [10,t]]);
+  translate([10, 0, 0])
+    rotate([0, -90, 0])
+      linear_extrude(t)
+        polygon([[t,t], [t,10], [10,t]]);
 }
 
-module sideBlank() {  
-  d = sidePlateSize;
-  pts = [
-    [0, 0],
-    [0, d[1]],
-    [wedgeX, d[1]],
-    topJoinPt,
-    [d[0], 0]
-  ];
-  linear_extrude(height=d[2]) 
-    polygon(points=pts);
+module bottomBlank() {
+  d = bottomPlateSize;
+  cube(d);
+  /*
+  // Right flange and brackets
+  translate([0,sidePlateSize[2],d[2]])
+    cube([d[0], d[2], d[2]]);
+  translate([0, d[2], d[2]])
+    bracket();
+  translate([d[0]/2-5, d[2], d[2]])
+    bracket();
+  translate([d[0]-10, d[2], d[2]])
+    bracket();
+  
+  // Left flange and brackets
+  translate([0, d[1], 0])
+    mirror([0, 1, 0]) {
+      translate([0,sidePlateSize[2],d[2]])
+        cube([d[0], d[2], d[2]]);
+      translate([0, d[2], d[2]])
+        bracket();
+      translate([d[0]/2-5, d[2], d[2]])
+        bracket();
+      translate([d[0]-10, d[2], d[2]])
+        bracket();
+  }
+  */
+}
+
+module bottomPlate() {
+   translate([sidePlateSize[2], -bottomPlateSize[1]/2, -bottomPlateSize[2]]) 
+      bottomBlank(); 
+}
+
+module sideBlank(side) {  
+  m = side == "right" ? [0,0,1] : [0,0,0];
+  mirror(m) {
+    // Blank side
+    d = sidePlateSize;
+    pts = [
+      [0, 0],
+      [0, d[1]],
+      [wedgeX, d[1]],
+      topJoinPt,
+      [d[0], 0]
+    ];
+    linear_extrude(height=d[2]) 
+      polygon(points=pts);
+    
+    // Bottom flange and brackets
+    translate([d[2], bottomPlateSize[2], d[2]]) {
+      l = (d[0]-d[2]-30)/2;
+      difference() {
+        cube([d[0]-d[2], d[2], 10]);
+        translate([10, 0, d[2]])
+          cube([l, d[2], 10 - d[2]]);
+        translate([10*2+l, 0, d[2]])
+          cube([l, d[2], 10 - d[2]]);
+      }
+    }  
+    
+    // Rear flange and brackets
+    translate([d[2], bottomPlateSize[2], d[2]]) {
+      h = d[1]-d[2]-bottomPlateSize[2];
+      difference() {
+        cube([d[2], h, 10]);
+        translate([0, 10, d[2]])
+          cube([d[2], h - 20, 10 - d[2]]);
+      }
+    }
+  }
 }
 
 module sidePlate(side) {
   s = (side == "right" ? -1 : 1);
-  yOff = (side == "right" ? - sidePlateSize[2] : 0);
+  yOff = (side == "right" ? -2 * sidePlateSize[2] : 0);
   difference() {
     translate([0, s*bottomPlateSize[1]/2 + sidePlateSize[2] + yOff, -bottomPlateSize[2]])
-       rotate([90, 0, 0])
-          sideBlank();
+       rotate([90, 0, 0]) 
+          sideBlank(side);
       servo(side);
   } 
 }
