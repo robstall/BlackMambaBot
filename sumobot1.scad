@@ -10,14 +10,14 @@ drawBottonPlate = true;
 drawRightSidePlate = true;
 drawLeftSidePlate = true;
 drawBackPlate = true;
-drawComponents = false;
-drawTopFwdPlate = false;
+drawComponents = true;
+drawTopFwdPlate = true;
 showSizeLimit = false;
-drawRightSideFwdPlate = false;
-drawLeftSideFwdPlate = false;
-drawBottomFwdPlate = false;
-drawRightCaster = false;
-drawLeftCaster = false;
+drawRightSideFwdPlate = true;
+drawLeftSideFwdPlate = true;
+drawBottomFwdPlate = true;
+drawRightCaster = true;
+drawLeftCaster = true;
 
 
 groundClearance = 5;
@@ -100,30 +100,6 @@ module bracket() {
 module bottomBlank() {
   d = bottomPlateSize;
   cube(d);
-  /*
-  // Right flange and brackets
-  translate([0,sidePlateSize[2],d[2]])
-    cube([d[0], d[2], d[2]]);
-  translate([0, d[2], d[2]])
-    bracket();
-  translate([d[0]/2-5, d[2], d[2]])
-    bracket();
-  translate([d[0]-10, d[2], d[2]])
-    bracket();
-  
-  // Left flange and brackets
-  translate([0, d[1], 0])
-    mirror([0, 1, 0]) {
-      translate([0,sidePlateSize[2],d[2]])
-        cube([d[0], d[2], d[2]]);
-      translate([0, d[2], d[2]])
-        bracket();
-      translate([d[0]/2-5, d[2], d[2]])
-        bracket();
-      translate([d[0]-10, d[2], d[2]])
-        bracket();
-  }
-  */
 }
 
 module bottomPlate() {
@@ -167,6 +143,28 @@ module sideBlank(side) {
           cube([d[2], h - 20, 10 - d[2]]);
       }
     }
+    
+    // Top flange and brackets
+    translate([d[2], d[1]-2*d[2], d[2]]) {
+      difference() {
+        cube([wedgeX - d[2], d[2], 10]);
+        translate([10, 0, d[2]])
+          cube([wedgeX-d[2]-20, d[2], 10-d[2]]);
+      }
+    }
+    
+    // Front bracket
+    translate([d[0]-d[2], bottomPlateSize[2], d[2]])
+      cube([d[2], topJoinPt[1]-2*d[2], 10]);
+    
+    // Wedge flange and bracket
+    translate([wedgeX-1.3, d[1]-2*d[2]+.1, d[2]])
+      rotate([0, 0, -wedgeAngle]) {
+        cube([93, d[2], d[2]]);
+        cube([10, d[2], 10]);
+        translate([93-10, 0, 0])
+          cube([10, d[2], 10]);
+      }   
   }
 }
 
