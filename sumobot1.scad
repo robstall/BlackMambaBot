@@ -7,17 +7,17 @@ use <../../SCADLib/servoS9001.scad>
 // Dimensions in mm
 
 drawBottonPlate = true;
-drawRightSidePlate = true;
-drawLeftSidePlate = true;
-drawBackPlate = true;
+drawRightSidePlate = false;
+drawLeftSidePlate = false;
+drawBackPlate = false;
 drawComponents = true;
-drawTopFwdPlate = true;
+drawTopFwdPlate = false;
 showSizeLimit = false;
-drawRightSideFwdPlate = true;
-drawLeftSideFwdPlate = true;
-drawBottomFwdPlate = true;
-drawRightCaster = true;
-drawLeftCaster = true;
+drawRightSideFwdPlate = false;
+drawLeftSideFwdPlate = false;
+drawBottomFwdPlate = false;
+drawRightCaster = false;
+drawLeftCaster = false;
 
 
 groundClearance = 5;
@@ -34,6 +34,7 @@ wedgeX = 60; // Distance from rear wedge starts at
 topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * tan(wedgeAngle)]; // Top point where the fwd bow joins
 
 //sideBlank("left");
+//bottomBlank();
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -99,7 +100,15 @@ module bracket() {
 
 module bottomBlank() {
   d = bottomPlateSize;
-  cube(d);
+  difference() {
+    cube(d);
+    for (x = [0:2]) {
+      for (y = [0:11]) {
+        translate([15+x*40, 15+y*10, 0])
+          plate([35, 5, d[2]], r=d[2]/2);
+      }
+    }
+  }
 }
 
 module bottomPlate() {
@@ -108,10 +117,11 @@ module bottomPlate() {
 }
 
 module sideBlank(side) {  
+  d = sidePlateSize;
   m = side == "right" ? [0,0,1] : [0,0,0];
+  difference() {
   mirror(m) {
     // Blank side
-    d = sidePlateSize;
     pts = [
       [0, 0],
       [0, d[1]],
@@ -166,6 +176,13 @@ module sideBlank(side) {
           cube([10, d[2], 10]);
       }   
   }
+  
+  // The side vents
+  for (i = [2:7]) {
+    translate([wedgeX + i*10, 10, 0])
+      plate([5, 40-i*4.5, d[2]], r=d[2]/2);
+  }
+}
 }
 
 module sidePlate(side) {
