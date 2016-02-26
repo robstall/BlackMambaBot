@@ -6,11 +6,11 @@ use <../../SCADLib/servoS9001.scad>
 
 // Dimensions in mm
 
-drawBottonPlate = true;
-drawRightSidePlate = false;
-drawLeftSidePlate = false;
-drawBackPlate = false;
-drawComponents = true;
+drawBottonPlate = false;
+drawRightSidePlate = false;     // done
+drawLeftSidePlate = true;       // done
+drawBackPlate = false;          // done
+drawComponents = false;
 drawTopFwdPlate = false;
 showSizeLimit = false;
 drawRightSideFwdPlate = false;
@@ -33,7 +33,7 @@ wedgeAngle = 25; // Angle of wedge
 wedgeX = 60; // Distance from rear wedge starts at
 topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * tan(wedgeAngle)]; // Top point where the fwd bow joins
 
-//sideBlank("left");
+//sideBlank("right");
 //bottomBlank();
 
 module sizeLimit() {
@@ -119,70 +119,78 @@ module bottomPlate() {
 module sideBlank(side) {  
   d = sidePlateSize;
   m = side == "right" ? [0,0,1] : [0,0,0];
-  difference() {
-  mirror(m) {
-    // Blank side
-    pts = [
-      [0, 0],
-      [0, d[1]],
-      [wedgeX, d[1]],
-      topJoinPt,
-      [d[0], 0]
-    ];
-    linear_extrude(height=d[2]) 
-      polygon(points=pts);
-    
-    // Bottom flange and brackets
-    translate([d[2], bottomPlateSize[2], d[2]]) {
-      l = (d[0]-d[2]-30)/2;
+  //difference() {
+    mirror(m) {
+      // Blank side
+      pts = [
+        [0, 0],
+        [0, d[1]],
+        [wedgeX, d[1]],
+        topJoinPt,
+        [d[0], 0]
+      ];
+      
       difference() {
-        cube([d[0]-d[2], d[2], 10]);
-        translate([10, 0, d[2]])
-          cube([l, d[2], 10 - d[2]]);
-        translate([10*2+l, 0, d[2]])
-          cube([l, d[2], 10 - d[2]]);
+        linear_extrude(height=d[2]) 
+          polygon(points=pts);
+          // The side vents
+        for (i = [2:7]) {
+          translate([wedgeX + i*10, 10, 0])
+            plate([5, 40-i*4.5, d[2]], r=d[2]/2);
+        }
       }
-    }  
     
-    // Rear flange and brackets
-    translate([d[2], bottomPlateSize[2], d[2]]) {
-      h = d[1]-d[2]-bottomPlateSize[2];
-      difference() {
-        cube([d[2], h, 10]);
-        translate([0, 10, d[2]])
-          cube([d[2], h - 20, 10 - d[2]]);
+      // Bottom flange and brackets
+      translate([d[2], bottomPlateSize[2], d[2]]) {
+        l = (d[0]-d[2]-30)/2;
+        difference() {
+          cube([d[0]-d[2], d[2], 10]);
+          translate([10, 0, d[2]])
+            cube([l, d[2], 10 - d[2]]);
+          translate([10*2+l, 0, d[2]])
+            cube([l, d[2], 10 - d[2]]);
+        }
+      }  
+    
+      // Rear flange and brackets
+      translate([d[2], bottomPlateSize[2], d[2]]) {
+        h = d[1]-d[2]-bottomPlateSize[2];
+        difference() {
+          cube([d[2], h, 10]);
+          translate([0, 10, d[2]])
+            cube([d[2], h - 20, 10 - d[2]]);
+        }
       }
-    }
     
-    // Top flange and brackets
-    translate([d[2], d[1]-2*d[2], d[2]]) {
-      difference() {
-        cube([wedgeX - d[2], d[2], 10]);
-        translate([10, 0, d[2]])
-          cube([wedgeX-d[2]-20, d[2], 10-d[2]]);
+      // Top flange and brackets
+      translate([d[2], d[1]-2*d[2], d[2]]) {
+        difference() {
+          cube([wedgeX - d[2], d[2], 10]);
+          translate([10, 0, d[2]])
+            cube([wedgeX-d[2]-20, d[2], 10-d[2]]);
+        }
       }
-    }
     
-    // Front bracket
-    translate([d[0]-d[2], bottomPlateSize[2], d[2]])
-      cube([d[2], topJoinPt[1]-2*d[2], 10]);
+      // Front bracket
+      translate([d[0]-d[2], bottomPlateSize[2], d[2]])
+        cube([d[2], topJoinPt[1]-2*d[2], 10]);
     
-    // Wedge flange and bracket
-    translate([wedgeX-1.3, d[1]-2*d[2]+.1, d[2]])
-      rotate([0, 0, -wedgeAngle]) {
-        cube([93, d[2], d[2]]);
-        cube([10, d[2], 10]);
-        translate([93-10, 0, 0])
+      // Wedge flange and bracket
+      translate([wedgeX-1.3, d[1]-2*d[2]+.1, d[2]])
+        rotate([0, 0, -wedgeAngle]) {
+          cube([93, d[2], d[2]]);
           cube([10, d[2], 10]);
-      }   
+          translate([93-10, 0, 0])
+            cube([10, d[2], 10]);
+        }   
+     
+//      // The side vents
+//      for (i = [2:7]) {
+//        translate([wedgeX + i*10, 10, 0])
+//          plate([5, 40-i*4.5, d[2]], r=d[2]/2);
+//      }
+//    }
   }
-  
-  // The side vents
-  for (i = [2:7]) {
-    translate([wedgeX + i*10, 10, 0])
-      plate([5, 40-i*4.5, d[2]], r=d[2]/2);
-  }
-}
 }
 
 module sidePlate(side) {
