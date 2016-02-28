@@ -6,13 +6,15 @@ use <../../SCADLib/servoS9001.scad>
 
 // Dimensions in mm
 
-drawBottonPlate = false;
+drawBottonPlate = false;         // done
 drawRightSidePlate = false;     // done
-drawLeftSidePlate = true;       // done
+drawLeftSidePlate = false;      // done
 drawBackPlate = false;          // done
 drawComponents = false;
 drawTopFwdPlate = false;
 showSizeLimit = false;
+
+drawFrontAssembly = true;
 drawRightSideFwdPlate = false;
 drawLeftSideFwdPlate = false;
 drawBottomFwdPlate = false;
@@ -27,6 +29,7 @@ bottomPlateSize = [145 - thickness, 145, thickness];
 sidePlateSize = [145, wheelDiameter - groundClearance, thickness];
 topFwdPlateSize = [145, 145, thickness];
 casterBallDiameter = 17.1;
+casterOverSize = 1.0;
 
 axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-groundClearance]; // x and z offset of axel
 wedgeAngle = 25; // Angle of wedge
@@ -35,6 +38,8 @@ topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * 
 
 //sideBlank("right");
 //bottomBlank();
+//casterBlank();
+//casterTestPlate();
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -76,10 +81,42 @@ module wheel(side) {
       cylinder(d=wheelDiameter, h=5); 
 }
 
+module casterBlank() {
+  r = (casterBallDiameter) / 2;
+  fw = r / 1.5; // Finger width
+  
+  difference() {
+    for (i = [0:1]) {
+      mirror([i,i,0]) {
+        difference() {
+          union() {
+            translate([0, fw/2, r]) rotate([90, 0, 0]) cylinder(h=fw,r=r+3);
+            translate([-(r+3), -fw/2, 0]) cube([2*(r+3), fw, r]);
+            translate([-r-10,-fw/2,groundClearance+bottomPlateSize[2]])cube([2*(r+10), fw, 3]);
+          }
+          translate([-15, -15, -30+groundClearance+bottomPlateSize[2]]) cube([30, 30, 30]);
+        } 
+      }
+    }
+    translate([0, 0, r-casterOverSize]) sphere(r=(r+casterOverSize/2));
+  }
+}
+
+// Test plate with caster cutout to for test printing
+module casterTestPlate() {
+  r = (casterBallDiameter) / 2;
+  difference() {
+     translate([-36/2,-36/2,groundClearance]) cube([36, 36,    bottomPlateSize[2]]);
+    
+     //casterBlank();
+     translate([0, 0, r-casterOverSize]) sphere(r=(r+casterOverSize/2));
+  }
+}
+
 module caster(side) {
   s = (side == "right" ? -1 : 1);
-  translate([bottomPlateSize[0]+sidePlateSize[2]+casterBallDiameter/2,
-            s*(bottomPlateSize[1]/2-casterBallDiameter), 
+  translate([bottomPlateSize[0]+sidePlateSize[2]+casterBallDiameter*0.75,
+            s*(bottomPlateSize[1]/2-casterBallDiameter-5), 
             casterBallDiameter/2-groundClearance-bottomPlateSize[2]])
     sphere(casterBallDiameter / 2);
 }
@@ -206,10 +243,11 @@ module sidePlate(side) {
 
 module sideFwdBlank() {
   d = sidePlateSize;
+  tipX = topJoinPt[1]/tan(wedgeAngle);
   pts = [
     [0, 0],
     [0, topJoinPt[1]],
-    [topJoinPt[1]/tan(wedgeAngle), 0]
+    [tipX, 0]
   ];
   linear_extrude(height=d[2])
     polygon(points=pts);
@@ -263,6 +301,27 @@ module bottomFwdPlateBlank() {
   ];
   linear_extrude(height=bottomPlateSize[2])
     polygon(pts);
+  translate([0, 0, bottomPlateSize[2]])
+    cube([bottomPlateSize[2], 10, 10]);
+  translate([0, bottomPlateSize[1]-10, bottomPlateSize[2]])
+    cube([bottomPlateSize[2], 10, 10]);
+   translate([-5, bottomPlateSize[1]/2-10, bottomPlateSize[2]])
+    cube([10, 20, bottomPlateSize[2]]);
+  
+  // Front solid wedge bit
+  translate([0, bottomPlateSize[1], 0]) {
+    rotate([90,0,0]) {
+      tipX = topJoinPt[1]/tan(wedgeAngle);
+      width = tipX - 33;
+      pts2 = [
+        [tipX-width, 0],
+        [tipX, 0],
+        [tipX-width, width*tan(wedgeAngle)]
+      ];
+      linear_extrude(height=bottomPlateSize[1])
+        polygon(points=pts2);
+    }
+  }
 }
 
 module bottomFwdPlate() {
@@ -275,13 +334,25 @@ module bottomFwdPlate() {
   }
 }
 
+module frontAssembly() {
+  difference() {
+    union() {
+      color("yellow") caster("right");
+      color("yellow") caster("left");
+      color("orange") sideFwdPlate("right");
+      color("orange") sideFwdPlate("left");
+      color("orange") bottomFwdPlate();
+    }
+    // Cutout space for fwd plate and trim the point off the nose to make it printable
+    topFwdPlate(); 
+    translate([0,0,1]) topFwdPlate();
+    translate([bottomPlateSize[0]+topJoinPt[1]/tan(wedgeAngle)-5, -150, -5]) cube([10, 300, 10]);
+  }
+}
+
 module bot() {
   if (drawBottonPlate) 
     color("green") bottomPlate();
-  if (drawRightCaster)
-    color("yellow") caster("right");
-  if (drawLeftCaster)
-    color("yellow") caster("left");
   if (drawRightSidePlate)
     color("darkgreen") sidePlate("right");
   if (drawLeftSidePlate)
@@ -290,12 +361,22 @@ module bot() {
     color("blue") backPlate();
   if (drawTopFwdPlate)
     color("yellow") topFwdPlate();
-  if (drawRightSideFwdPlate)
-    color("orange") sideFwdPlate("right");
-  if (drawLeftSideFwdPlate)
-    color("orange") sideFwdPlate("left");
-  if (drawBottomFwdPlate)
-    color("orange") bottomFwdPlate();
+  
+  if (drawFrontAssembly) {
+    frontAssembly();
+  }
+  else {
+    if (drawRightCaster)
+      color("yellow") caster("right");
+    if (drawLeftCaster)
+      color("yellow") caster("left"); 
+    if (drawRightSideFwdPlate)
+      color("orange") sideFwdPlate("right");
+    if (drawLeftSideFwdPlate)
+      color("orange") sideFwdPlate("left");
+    if (drawBottomFwdPlate)
+      color("orange") bottomFwdPlate();
+  }
   
   if (drawComponents) {
     color("red") pb2sBatt();
