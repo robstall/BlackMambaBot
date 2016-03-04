@@ -6,11 +6,11 @@ use <../../SCADLib/servoS9001.scad>
 
 // Dimensions in mm
 
-drawBottonPlate = false;         // done
+drawBottonPlate = true;         // done
 drawRightSidePlate = false;     // done
 drawLeftSidePlate = false;      // done
 drawBackPlate = false;          // done
-drawComponents = false;
+drawComponents = true;
 drawTopFwdPlate = false;
 showSizeLimit = false;
 
@@ -28,7 +28,7 @@ wheelDiameter = 66.5;
 bottomPlateSize = [145 - thickness, 145, thickness];
 sidePlateSize = [145, wheelDiameter - groundClearance, thickness];
 topFwdPlateSize = [145, 145, thickness];
-casterBallDiameter = 17.1;
+casterBallDiameter = 15.6;
 casterOverSize = 1.0;
 
 axelOffset = [wheelDiameter/2, wheelDiameter/2-bottomPlateSize[2]-groundClearance]; // x and z offset of axel
@@ -40,6 +40,11 @@ topJoinPt = [sidePlateSize[0], sidePlateSize[1] - (sidePlateSize[0] - wedgeX) * 
 //bottomBlank();
 //casterBlank();
 //casterTestPlate();
+//ballClipBase();
+
+// Uncomment these for the clips that hold down the caster wheels
+//ballClip();
+//translate([300,0,0]) mirror([1,0,0]) ballClip();
 
 module sizeLimit() {
    translate([0, -100, -8])
@@ -302,9 +307,15 @@ module bottomFwdPlateBlank() {
   linear_extrude(height=bottomPlateSize[2])
     polygon(pts);
   translate([0, 0, bottomPlateSize[2]])
-    cube([bottomPlateSize[2], 10, 10]);
+    difference() {
+      cube([bottomPlateSize[2], 10, 10]);
+      translate([0, 5, 5]) rotate([0,90,0]) cylinder(bottomPlateSize[2]*2, d=2.5);
+    }
   translate([0, bottomPlateSize[1]-10, bottomPlateSize[2]])
-    cube([bottomPlateSize[2], 10, 10]);
+    difference() {
+      cube([bottomPlateSize[2], 10, 10]);
+      translate([0, 5, 5]) rotate([0,90,0]) cylinder(bottomPlateSize[2]*2, d=2.5);
+    }
    translate([-5, bottomPlateSize[1]/2-10, bottomPlateSize[2]])
     cube([10, 20, bottomPlateSize[2]]);
   
@@ -334,11 +345,30 @@ module bottomFwdPlate() {
   }
 }
 
+module ballClipBase() {
+  difference() {
+    translate([-10,0,0]) cube([20, 10, 3]);
+    translate([-5,5,0]) cylinder(5, d=2.5);
+  }
+  translate([0, 3, 3]) cube([22, 4, 9]);
+}
+
+module ballClip() {
+  difference() {
+    translate([152, -33, 0])
+      rotate([0, 0, -90])
+        ballClipBase();
+    frontAssembly();
+    topFwdPlate();
+    caster("right");
+  }
+}
+
 module frontAssembly() {
   difference() {
     union() {
-      color("yellow") caster("right");
-      color("yellow") caster("left");
+      //color("yellow") caster("right");
+      //color("yellow") caster("left");
       color("orange") sideFwdPlate("right");
       color("orange") sideFwdPlate("left");
       color("orange") bottomFwdPlate();
@@ -347,6 +377,10 @@ module frontAssembly() {
     topFwdPlate(); 
     translate([0,0,1]) topFwdPlate();
     translate([bottomPlateSize[0]+topJoinPt[1]/tan(wedgeAngle)-5, -150, -5]) cube([10, 300, 10]);
+    
+    // Marble casters
+    color("yellow") caster("right");
+    color("yellow") caster("left");
   }
 }
 
